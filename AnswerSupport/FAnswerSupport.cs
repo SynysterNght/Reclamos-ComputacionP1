@@ -12,6 +12,8 @@ using System.Reflection.Metadata;
 using AnswerSupport.Helpers;
 using AnswerSupport.Models;
 using System.Linq;
+using Microsoft.Extensions.ObjectPool;
+using System.Collections.Generic;
 
 namespace AnswerSupport
 {
@@ -24,6 +26,8 @@ namespace AnswerSupport
             ILogger log,
             string id)
         {
+            Support support = new Support();
+            List<string> list = new List<string>();
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -42,7 +46,13 @@ namespace AnswerSupport
                 return new NotFoundResult();
             }
 
-            document.SetPropertyValue("cause", "Probando el update");
+            string respuesta = req.Query["respuesta"];
+            support.Answers = document.GetPropertyValue<string[]>("answers");
+
+            list = support.Answers.ToList<string>();
+            list.Add(respuesta);
+            
+            document.SetPropertyValue("answers", list.ToArray<string>());
 
             
             await client.ReplaceDocumentAsync(document);
