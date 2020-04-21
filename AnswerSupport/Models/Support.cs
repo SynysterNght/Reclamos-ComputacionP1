@@ -7,10 +7,13 @@
         public string Id { get; set; }
 
         [JsonProperty("clientid")]
-        public int ClientId { get; set; }
+        public string ClientId { get; set; }
 
         [JsonProperty("employeeid")]
         public string EmployeeId { get; set; }
+
+        [JsonProperty("orderid")]
+        public string OrderId { get; set; }
 
         [JsonProperty("type")]
         public string Type { get; set; }

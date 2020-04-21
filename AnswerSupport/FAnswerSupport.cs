@@ -40,7 +40,6 @@ namespace AnswerSupport
                 .Where(t => t.Id == id)
                 .AsEnumerable()
                 .FirstOrDefault();
-
             if (document == null)
             {
                 log.LogError($"TaskItem {id} not found. It may not exist!");
@@ -68,7 +67,6 @@ namespace AnswerSupport
             support.Answers = document.GetPropertyValue<string[]>("answers");
             support.AnswersDates = document.GetPropertyValue<string[]>("answersdates");
 
-
             list = support.Answers.ToList<string>();
             list.Add(respuesta);
             document.SetPropertyValue("answers", list.ToArray<string>());
@@ -77,15 +75,11 @@ namespace AnswerSupport
             list.Add(DateTime.Now.ToString());
             document.SetPropertyValue("answersdates", list.ToArray<string>());
 
-            
-            
-            
             await client.ReplaceDocumentAsync(document);
 
             Support updatedTaskItemDocument = (dynamic)document;
 
             return new OkObjectResult(updatedTaskItemDocument);
-        
         }
     }
 }

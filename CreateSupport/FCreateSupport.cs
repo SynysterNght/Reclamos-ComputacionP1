@@ -42,6 +42,9 @@ namespace CreateSupport
                 {
                     Id = data.Id,
                     ClientId = data.ClientId,
+                    ////emulando el obtener del empleado le ponemos el id en la creacion
+                    EmployeeId = data.EmployeeId,
+                    OrderId = data.OrderId,
                     Type = data.Type,
                     Subject = data.Subject,
                     Description = data.Description,
