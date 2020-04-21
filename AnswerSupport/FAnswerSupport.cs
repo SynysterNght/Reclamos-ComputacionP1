@@ -48,12 +48,17 @@ namespace AnswerSupport
 
             string respuesta = req.Query["respuesta"];
             support.Answers = document.GetPropertyValue<string[]>("answers");
+            support.AnswersDates = document.GetPropertyValue<string[]>("answersdates");
+
 
             list = support.Answers.ToList<string>();
             list.Add(respuesta);
-            
             document.SetPropertyValue("answers", list.ToArray<string>());
 
+            list = support.AnswersDates.ToList<string>();
+            list.Add(DateTime.Now.ToString());
+            document.SetPropertyValue("answersdates", list.ToArray<string>());
+            
             
             await client.ReplaceDocumentAsync(document);
 

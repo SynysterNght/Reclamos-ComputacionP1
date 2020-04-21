@@ -11,6 +11,7 @@ namespace CreateSupport
     using Newtonsoft.Json;
     using Models;
     using Helpers;
+    using System.Collections.Generic;
 
     public class FCreateSupport
 
@@ -31,18 +32,23 @@ namespace CreateSupport
             try
             {
 
+                List<string> respuestas = new List<string>();
+                respuestas.Add("Inicio");
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<Support>(requestBody);
+                List<string> dates = new List<string>();
+                dates.Add(DateTime.Now.ToString());
                 var support = new Support
                 {
-
-                    Id=data.Id,
+                    Id = data.Id,
                     ClientId = data.ClientId,
                     Type = data.Type,
                     Subject = data.Subject,
                     Description = data.Description,
+                    Answers = respuestas.ToArray(),
                     Status = "En espera",
-                    InitialDate = DateTime.Now.ToString()
+                    InitialDate = DateTime.Now.ToString(),
+                    AnswersDates = dates.ToArray()
                     ///usandose "MM/DD/YYYY HH:MM:SS AM"
                     //"yyyy’-‘MM’-‘dd’  ’HH’:’mm’:’ss"
 
