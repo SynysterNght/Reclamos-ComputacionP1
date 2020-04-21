@@ -13,32 +13,33 @@ namespace GetSupport
     using GetSupport.Models;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
 
     public class FGetSupport
     {
+
         [FunctionName("FGetSupport")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "FGetSupport/{id}")] HttpRequest req,
             [CosmosDB(
                         databaseName: Constants.COSMOS_DB_DATABASE_NAME,
                         collectionName: Constants.COSMOS_DB_CONTAINER_NAME,
                         ConnectionStringSetting = "StrCosmos",
-                        SqlQuery ="SELECT * FROM c"
+                        SqlQuery ="SELECT * FROM c WHERE c.id={id}"
 
                         )]
             IEnumerable<Support> supports,
-            ILogger log)
+            ILogger log,
+            string id)
         {
+         ///////Se necesita poner en la direccion el id como url no como parametro   
+
             if (supports == null)
             {
                 return new NotFoundResult();
             }
 
-            //string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            //var data = JsonConvert.DeserializeObject(requestBody);
-            
-
-            
+          
             return new OkObjectResult(supports);
         }
     }
