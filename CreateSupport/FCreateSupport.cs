@@ -15,7 +15,7 @@ namespace CreateSupport
     public class FCreateSupport
 
     {
-        [FunctionName("Function1")]
+        [FunctionName("FCreateSupport")]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous,  "post", Route = null)] HttpRequest req,
             [CosmosDB(
