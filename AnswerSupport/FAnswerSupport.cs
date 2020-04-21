@@ -26,9 +26,10 @@ namespace AnswerSupport
             ILogger log,
             string id)
         {
+            IActionResult returnValue;
             Support support = new Support();
             List<string> list = new List<string>();
-
+            string respuesta;
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
             var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
@@ -46,7 +47,24 @@ namespace AnswerSupport
                 return new NotFoundResult();
             }
 
-            string respuesta = req.Query["respuesta"];
+            respuesta = document.GetPropertyValue<string>("status");
+            switch (respuesta)
+            {
+                case "Closed":
+                    returnValue = new StatusCodeResult(StatusCodes.Status406NotAcceptable);
+                    return returnValue;
+                case "Pending":
+                    document.SetPropertyValue("status","Answered");
+                    break;
+                case "Answered":
+                    document.SetPropertyValue("status", "Pending");
+                    break;
+                default:
+                    Console.WriteLine("Default case");
+                    break;
+            }
+            
+            respuesta = req.Query["respuesta"];
             support.Answers = document.GetPropertyValue<string[]>("answers");
             support.AnswersDates = document.GetPropertyValue<string[]>("answersdates");
 
@@ -58,6 +76,8 @@ namespace AnswerSupport
             list = support.AnswersDates.ToList<string>();
             list.Add(DateTime.Now.ToString());
             document.SetPropertyValue("answersdates", list.ToArray<string>());
+
+            
             
             
             await client.ReplaceDocumentAsync(document);

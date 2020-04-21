@@ -46,7 +46,7 @@ namespace CreateSupport
                     Subject = data.Subject,
                     Description = data.Description,
                     Answers = respuestas.ToArray(),
-                    Status = "En espera",
+                    Status = "Pending",
                     InitialDate = DateTime.Now.ToString(),
                     AnswersDates = dates.ToArray()
                     ///usandose "MM/DD/YYYY HH:MM:SS AM"
