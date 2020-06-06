@@ -26,7 +26,7 @@ namespace GetSupport
                         collectionName: Constants.COSMOS_DB_CONTAINER_NAME,
                         ConnectionStringSetting = "StrCosmos",
                         SqlQuery ="SELECT * FROM c WHERE c.id={id}"
-
+                        ///"StrCosmos"
                         )]
             IEnumerable<Support> supports,
             ILogger log,
