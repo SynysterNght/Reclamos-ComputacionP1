@@ -25,35 +25,48 @@ namespace CloseSupport
             ILogger log,
             string id)
         {
-
-            Support support = new Support();
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
-            var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
-
-            Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
-
-            var document = client.CreateDocumentQuery(taskCollectionUri)
-                .Where(t => t.Id == id)
-                .AsEnumerable()
-                .FirstOrDefault();
-
-            if (document == null)
+            IActionResult returnvalue = null;
+            try
             {
-                log.LogError($"TaskItem {id} not found. It may not exist!");
-                return new NotFoundResult();
+                Support support = new Support();
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
+                var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
+
+                Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
+
+                var document = client.CreateDocumentQuery(taskCollectionUri)
+                    .Where(t => t.Id == id)
+                    .AsEnumerable()
+                    .FirstOrDefault();
+
+                if (document == null)
+                {
+                    log.LogError($"TaskItem {id} not found. It may not exist!");
+                    returnvalue = new NotFoundResult();
+                }
+                else
+                {
+
+                    string motivo = req.Query["motivo"];
+                    document.SetPropertyValue("conclusiondate", DateTime.Now.ToString());
+                    document.SetPropertyValue("cause", motivo);
+                    document.SetPropertyValue("status", "Closed");
+
+                    await client.ReplaceDocumentAsync(document);
+
+                    Support updatedTaskItemDocument = (dynamic)document;
+
+                    returnvalue = new OkObjectResult(updatedTaskItemDocument);
+                }
+                
             }
-
-            string motivo = req.Query["motivo"];
-            document.SetPropertyValue("conclusiondate", DateTime.Now.ToString());
-            document.SetPropertyValue("cause",motivo);
-            document.SetPropertyValue("status", "Closed");
-
-            await client.ReplaceDocumentAsync(document);
-
-            Support updatedTaskItemDocument = (dynamic)document;
-
-            return new OkObjectResult(updatedTaskItemDocument);
+            catch (Exception ex)
+            {
+                log.LogError($"Could not close support. Exception: {ex.Message}");
+                returnvalue = new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+            return returnvalue;
         }
     }
 }

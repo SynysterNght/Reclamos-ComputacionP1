@@ -32,15 +32,24 @@ namespace GetSupport
             ILogger log,
             string id)
         {
-         ///////Se necesita poner en la direccion el id como url no como parametro   
 
-            if (supports == null)
+            IActionResult returnvalue = null;
+            try
             {
-                return new NotFoundResult();
-            }
+                ///////Se necesita poner en la direccion el id como url no como parametro   
 
-          
-            return new OkObjectResult(supports);
+                if (supports == null)
+                {
+                    return new NotFoundResult();
+                }else
+                    returnvalue = new OkObjectResult(supports);
+            }
+            catch (Exception ex)
+            {
+                log.LogError($"Could not get support. Exception: {ex.Message}");
+                returnvalue = new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+            return returnvalue;
         }
     }
 }

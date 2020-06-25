@@ -26,60 +26,73 @@ namespace AnswerSupport
             ILogger log,
             string id)
         {
-            IActionResult returnValue;
-            Support support = new Support();
-            List<string> list = new List<string>();
-            string respuesta;
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
-            var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
-
-            Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
-
-            var document = client.CreateDocumentQuery(taskCollectionUri)
-                .Where(t => t.Id == id)
-                .AsEnumerable()
-                .FirstOrDefault();
-            if (document == null)
+            IActionResult returnvalue = null;
+            try
             {
-                log.LogError($"TaskItem {id} not found. It may not exist!");
-                return new NotFoundResult();
-            }
+                Support support = new Support();
+                List<string> list = new List<string>();
+                string respuesta;
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
-            respuesta = document.GetPropertyValue<string>("status");
-            switch (respuesta)
+                var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
+
+                Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
+
+                var document = client.CreateDocumentQuery(taskCollectionUri)
+                    .Where(t => t.Id == id)
+                    .AsEnumerable()
+                    .FirstOrDefault();
+                if (document == null)
+                {
+                    log.LogError($"TaskItem {id} not found. It may not exist!");
+                    return new NotFoundResult();
+                }
+                else
+                {
+
+                    respuesta = document.GetPropertyValue<string>("status");
+                    switch (respuesta)
+                    {
+                        case "Closed":
+                            returnvalue = new StatusCodeResult(StatusCodes.Status406NotAcceptable);
+                            return returnvalue;
+                        case "Pending":
+                            document.SetPropertyValue("status", "Answered");
+                            break;
+                        case "Answered":
+                            document.SetPropertyValue("status", "Pending");
+                            break;
+                        default:
+                            Console.WriteLine("Default case");
+                            break;
+                    }
+
+                    respuesta = req.Query["respuesta"];
+                    support.Answers = document.GetPropertyValue<string[]>("answers");
+                    support.AnswersDates = document.GetPropertyValue<string[]>("answersdates");
+
+                    list = support.Answers.ToList<string>();
+                    list.Add(respuesta);
+                    document.SetPropertyValue("answers", list.ToArray<string>());
+
+                    list = support.AnswersDates.ToList<string>();
+                    list.Add(DateTime.Now.ToString());
+                    document.SetPropertyValue("answersdates", list.ToArray<string>());
+
+                    await client.ReplaceDocumentAsync(document);
+
+                    Support updatedTaskItemDocument = (dynamic)document;
+
+                    returnvalue = new OkObjectResult(updatedTaskItemDocument);
+                }
+            }
+            catch (Exception ex)
             {
-                case "Closed":
-                    returnValue = new StatusCodeResult(StatusCodes.Status406NotAcceptable);
-                    return returnValue;
-                case "Pending":
-                    document.SetPropertyValue("status","Answered");
-                    break;
-                case "Answered":
-                    document.SetPropertyValue("status", "Pending");
-                    break;
-                default:
-                    Console.WriteLine("Default case");
-                    break;
+                log.LogError($"Could not respond support. Exception: {ex.Message}");
+                returnvalue = new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
-            
-            respuesta = req.Query["respuesta"];
-            support.Answers = document.GetPropertyValue<string[]>("answers");
-            support.AnswersDates = document.GetPropertyValue<string[]>("answersdates");
-
-            list = support.Answers.ToList<string>();
-            list.Add(respuesta);
-            document.SetPropertyValue("answers", list.ToArray<string>());
-
-            list = support.AnswersDates.ToList<string>();
-            list.Add(DateTime.Now.ToString());
-            document.SetPropertyValue("answersdates", list.ToArray<string>());
-
-            await client.ReplaceDocumentAsync(document);
-
-            Support updatedTaskItemDocument = (dynamic)document;
-
-            return new OkObjectResult(updatedTaskItemDocument);
+            return returnvalue;
         }
     }
+    
 }

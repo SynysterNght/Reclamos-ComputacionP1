@@ -30,32 +30,45 @@ namespace DeleteSupport
            ILogger logger,
            string id)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var option = new FeedOptions { EnableCrossPartitionQuery = true };
-
-            var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
-
-            Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
-
-            var document = pago.CreateDocumentQuery(taskCollectionUri, option)
-                .Where(t => t.Id == id)
-                .AsEnumerable()
-                .FirstOrDefault();
-
-            if (document == null)
+            IActionResult returnvalue = null;
+            try
             {
-                logger.LogError($"TaskItem {id} not found. It may not exist!");
-                return new OkObjectResult("No existe el ID ingresado");
+                    string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var option = new FeedOptions { EnableCrossPartitionQuery = true };
+
+                var updatedTask = JsonConvert.DeserializeObject<Support>(requestBody);
+
+                Uri taskCollectionUri = UriFactory.CreateDocumentCollectionUri(Constants.COSMOS_DB_DATABASE_NAME, Constants.COSMOS_DB_CONTAINER_NAME);
+
+                var document = pago.CreateDocumentQuery(taskCollectionUri, option)
+                    .Where(t => t.Id == id)
+                    .AsEnumerable()
+                    .FirstOrDefault();
+
+                if (document == null)
+                {
+                    logger.LogError($"TaskItem {id} not found. It may not exist!");
+                    returnvalue = new OkObjectResult("No existe el ID ingresado");
+                }
+                else {
+
+                    //bool pagado = document.GetPropertyValue<bool>("pagado");
+                    //pagado = true;
+
+
+                    await pago.DeleteDocumentAsync(document.SelfLink, new RequestOptions { PartitionKey = new PartitionKey(document.Id) });
+
+
+                    returnvalue = new OkObjectResult("se Elimino correctamente  ");
+                }
+              
             }
-
-            //bool pagado = document.GetPropertyValue<bool>("pagado");
-            //pagado = true;
-
-
-            await pago.DeleteDocumentAsync(document.SelfLink, new RequestOptions { PartitionKey = new PartitionKey(document.Id) });
-
-
-            return new OkObjectResult("se Elimino correctamente  ");
+            catch (Exception ex)
+            {
+                logger.LogError($"Could not delete support. Exception: {ex.Message}");
+                returnvalue = new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+            return returnvalue;
         }
     }
 
