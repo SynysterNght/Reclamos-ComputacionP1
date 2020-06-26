@@ -28,14 +28,12 @@ namespace SendCloudToDevice
             try
             {
 
-                string mensaje = req.Query["mensaje"];
+                
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                dynamic data = JsonConvert.DeserializeObject(requestBody);
-                mensaje = mensaje ?? data?.mensaje;
-
-                string responseMessage = string.IsNullOrEmpty(mensaje)
-                    ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                    : $"Hello, {mensaje}. This HTTP triggered function executed successfully.";
+                var data = JsonConvert.DeserializeObject<mensajesyn>(requestBody);
+                
+                var mensaje = new mensajesyn  { mensajeiot=data.mensajeiot };
+                
 
                 Console.WriteLine("Send Cloud-to-Device message\n");
 
@@ -44,10 +42,9 @@ namespace SendCloudToDevice
                 serviceClient = ServiceClient.CreateFromConnectionString(cn);
                 //////////////////
 
-                SendCloudToDeviceMessageAsync(mensaje).Wait();
+                SendCloudToDeviceMessageAsync(mensaje.mensajeiot).Wait();
               
-
-                returnvalue = new OkObjectResult(responseMessage);
+                returnvalue = new OkObjectResult(mensaje);
             }
             catch (Exception ex)
             {
